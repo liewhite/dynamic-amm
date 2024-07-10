@@ -52,7 +52,7 @@ def poll_pair(lp_cli: V3LP):
     nft_balance = lp_cli.balanceOf()
     # 没有流动性， 添加一波
     if nft_balance == 0:
-        add_liquidity(lp_cli, 500, 0.3)
+        lp_cli.cli.eth.wait_for_transaction_receipt(add_liquidity(lp_cli, 500, 0.3))
     else:
         token_ids = lp_cli.get_token_ids()
         # 已经存在流动性， 检查是否超时(缩小区间)
