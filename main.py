@@ -45,7 +45,7 @@ def add_liquidity(lp_cli: V3LP, tick_range=500, utilization=0.3):
     return lp_cli.add_liquidity(data)
 
 
-def poll_pair(lp_cli: V3LP):
+def poll_pair(lp_cli: V3LP,conf):
     """
     获取token_id, 如果不存在， 则添加流动性
     """
@@ -53,7 +53,7 @@ def poll_pair(lp_cli: V3LP):
     nft_balance = lp_cli.balanceOf()
     # 没有流动性， 添加一波
     if nft_balance == 0:
-        lp_cli.cli.eth.wait_for_transaction_receipt(add_liquidity(lp_cli, 500, 0.3))
+        lp_cli.cli.eth.wait_for_transaction_receipt(add_liquidity(lp_cli, conf['init_tick_range'], conf['add_ratio']))
     else:
         token_ids = lp_cli.get_token_ids()
         # 已经存在流动性， 检查是否超时(缩小区间)
@@ -84,13 +84,13 @@ def main():
     cli = Web3Client["arb"].with_account(conf["private_key"])
     lp_cli = V3LP(
         cli,
-        "0x912CE59144191C1204E64559FE8253a0e49E6548",
-        "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-        10 ** 18,
-        10 ** 6,
+        conf['token0'],
+        conf['token1'],
+        0,
+        0,
     )
     while True:
-        poll_pair(lp_cli)
+        poll_pair(lp_cli,conf)
 
 if __name__ == '__main__':
     logging.basicConfig(
