@@ -5,6 +5,7 @@ import traceback
 from ether.client import Web3Client
 from ether.abis import erc20
 
+from slack import send_notify
 from v3_lp import V3LP
 
 
@@ -103,4 +104,7 @@ if __name__ == '__main__':
         except Exception as e:
             logging.error(e)
             traceback.print_exc()
+            send_notify(f"""ERROR: {e}
+{traceback.format_exc()}
+""")
             time.sleep(3)

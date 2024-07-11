@@ -1,6 +1,9 @@
+import json
 import logging
 import time
 from ether.client import Web3Client
+
+from slack import send_notify
 
 
 factory_abi = '[{"inputs":[{"internalType":"address","name":"_poolDeployer","type":"address"},{"internalType":"address","name":"_vaultAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint8","name":"newDefaultCommunityFee","type":"uint8"}],"name":"DefaultCommunityFee","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newFarmingAddress","type":"address"}],"name":"FarmingAddress","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint16","name":"alpha1","type":"uint16"},{"indexed":false,"internalType":"uint16","name":"alpha2","type":"uint16"},{"indexed":false,"internalType":"uint32","name":"beta1","type":"uint32"},{"indexed":false,"internalType":"uint32","name":"beta2","type":"uint32"},{"indexed":false,"internalType":"uint16","name":"gamma1","type":"uint16"},{"indexed":false,"internalType":"uint16","name":"gamma2","type":"uint16"},{"indexed":false,"internalType":"uint32","name":"volumeBeta","type":"uint32"},{"indexed":false,"internalType":"uint16","name":"volumeGamma","type":"uint16"},{"indexed":false,"internalType":"uint16","name":"baseFee","type":"uint16"}],"name":"FeeConfiguration","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"Owner","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token0","type":"address"},{"indexed":true,"internalType":"address","name":"token1","type":"address"},{"indexed":false,"internalType":"address","name":"pool","type":"address"}],"name":"Pool","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"newVaultAddress","type":"address"}],"name":"VaultAddress","type":"event"},{"inputs":[],"name":"baseFeeConfiguration","outputs":[{"internalType":"uint16","name":"alpha1","type":"uint16"},{"internalType":"uint16","name":"alpha2","type":"uint16"},{"internalType":"uint32","name":"beta1","type":"uint32"},{"internalType":"uint32","name":"beta2","type":"uint32"},{"internalType":"uint16","name":"gamma1","type":"uint16"},{"internalType":"uint16","name":"gamma2","type":"uint16"},{"internalType":"uint32","name":"volumeBeta","type":"uint32"},{"internalType":"uint16","name":"volumeGamma","type":"uint16"},{"internalType":"uint16","name":"baseFee","type":"uint16"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"tokenA","type":"address"},{"internalType":"address","name":"tokenB","type":"address"}],"name":"createPool","outputs":[{"internalType":"address","name":"pool","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"defaultCommunityFee","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"farmingAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"poolByPair","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"poolDeployer","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint16","name":"alpha1","type":"uint16"},{"internalType":"uint16","name":"alpha2","type":"uint16"},{"internalType":"uint32","name":"beta1","type":"uint32"},{"internalType":"uint32","name":"beta2","type":"uint32"},{"internalType":"uint16","name":"gamma1","type":"uint16"},{"internalType":"uint16","name":"gamma2","type":"uint16"},{"internalType":"uint32","name":"volumeBeta","type":"uint32"},{"internalType":"uint16","name":"volumeGamma","type":"uint16"},{"internalType":"uint16","name":"baseFee","type":"uint16"}],"name":"setBaseFeeConfiguration","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint8","name":"newDefaultCommunityFee","type":"uint8"}],"name":"setDefaultCommunityFee","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_farmingAddress","type":"address"}],"name":"setFarmingAddress","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"setOwner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_vaultAddress","type":"address"}],"name":"setVaultAddress","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"vaultAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}]'
@@ -27,8 +30,8 @@ class V3LP:
         token_1,
         token_0_min_amount,
         token_1_min_amount,
-        factory_addr = "0x1a3c9B1d2F0529D97f2afC5136Cc23e58f1FD35B",
-        nft_manager_addr = '0x00c7f3082833e796A5b3e4Bd59f6642FF44DCD15',
+        factory_addr="0x1a3c9B1d2F0529D97f2afC5136Cc23e58f1FD35B",
+        nft_manager_addr="0x00c7f3082833e796A5b3e4Bd59f6642FF44DCD15",
     ) -> None:
         self.token0, self.token1 = token_0, token_1
         self.token_0_min_amount, self.token_1_min_amount = (
@@ -38,7 +41,7 @@ class V3LP:
         self.cli = cli
         self.nft_manager = cli.eth.contract(nft_manager_addr, abi=nft_manager_abi)
         self.factory = cli.eth.contract(factory_addr, abi=factory_abi)
-        pool_addr = self.factory.functions['poolByPair'](token_0, token_1).call()
+        pool_addr = self.factory.functions["poolByPair"](token_0, token_1).call()
         self.pool = cli.eth.contract(pool_addr, abi=pool_abi)
         self.tick_spacing = self.pool.functions["tickSpacing"]().call()
         self.last_add_ts = time.time()
@@ -63,7 +66,7 @@ class V3LP:
         return liq[4], liq[5]
 
     def add_liquidity(self, liqs):
-        logging.info(f'尝试添加流动性 {liqs}')
+        logging.info(f"尝试添加流动性 {liqs}")
         if (
             liqs[0]["amount0"] < self.token_0_min_amount
             or liqs[1]["amount1"] < self.token_1_min_amount
@@ -95,11 +98,17 @@ class V3LP:
             )
 
         result = self.nft_manager.functions["multicall"](data).transact().hex()
+        send_notify(
+            f"""INFO: 添加流动性 ✅
+tx: {result}
+{json.dumps(liqs, indent=2)}
+"""
+        )
         self.last_add_ts = time.time()
         return result
 
     def remove_liquidity(self, token_ids):
-        logging.info(f'尝试移除流动性 {token_ids}')
+        logging.info(f"尝试移除流动性 {token_ids}")
         data = []
         for token_id in token_ids:
             pos = self.position_info(token_id)
@@ -110,7 +119,14 @@ class V3LP:
             data.append(dec)
             data.append(col)
             data.append(bn)
-        return self.nft_manager.functions["multicall"](data).transact().hex()
+        result = self.nft_manager.functions["multicall"](data).transact().hex()
+        send_notify(
+            f"""INFO: 移除流动性 ✅
+tx: {result}
+{json.dumps(token_ids, indent=2)}
+"""
+        )
+        return result
 
     def _get_token_id(self, index):
         return self.nft_manager.functions["tokenOfOwnerByIndex"](
