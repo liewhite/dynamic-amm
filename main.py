@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import time
 import traceback
 from ether.client import Web3Client
@@ -80,7 +81,7 @@ def poll_pair(lp_cli: V3LP,conf):
 
 
 def main():
-    conf = json.load(open("config.json"))
+    conf = json.load(open(sys.argv[1] + ".json"))
     cli = Web3Client["arb"].with_account(conf["private_key"])
     lp_cli = V3LP(
         cli,
