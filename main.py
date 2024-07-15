@@ -31,14 +31,14 @@ def add_liquidity(lp_cli: V3LP, tick_range=500, utilization=0.3):
     data.append(
         {
             "tick_lower": current_tick - tick_range,
-            "tick_upper": current_tick - 10,
+            "tick_upper": current_tick,
             "amount0": token0_to_add,
             "amount1": token1_to_add,
         }
     )
     data.append(
         {
-            "tick_lower": current_tick + 10,
+            "tick_lower": current_tick,
             "tick_upper": current_tick + tick_range,
             "amount0": token0_to_add,
             "amount1": token1_to_add,
@@ -63,7 +63,7 @@ def poll_pair(lp_cli: V3LP,conf):
         if now - lp_cli.last_add_ts > 3600 * 6:
             pos = lp_cli.position_info(token_ids[0])
             old_lower, old_upper = lp_cli.position_ticks(pos)
-            old_range = old_upper - old_lower + 10
+            old_range = old_upper - old_lower
             lp_cli.cli.eth.wait_for_transaction_receipt(lp_cli.remove_liquidity(token_ids))
             lp_cli.cli.eth.wait_for_transaction_receipt(add_liquidity(lp_cli, old_range / 2))
         else:
@@ -74,7 +74,7 @@ def poll_pair(lp_cli: V3LP,conf):
             token1_low, token1_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[1])
             )
-            old_range = token0_up - token0_low + 10
+            old_range = token0_up - token0_low
             current_tick = lp_cli.current_tick()
             if current_tick > token1_up or current_tick < token0_low:
                 lp_cli.cli.eth.wait_for_transaction_receipt(lp_cli.remove_liquidity(token_ids))
