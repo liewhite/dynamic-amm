@@ -92,6 +92,7 @@ def main():
     )
     while True:
         poll_pair(lp_cli,conf)
+        time.sleep(5)
 
 if __name__ == '__main__':
     logging.basicConfig(
