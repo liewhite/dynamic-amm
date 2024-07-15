@@ -1,8 +1,8 @@
-import json
 import logging
 import requests
+from config import conf
 
-token = json.load(open('config.json'))['slack_token']
+token = conf['slack_token']
 
 def send_notify(text, channel='C07BHEP0CTZ'):
     try:

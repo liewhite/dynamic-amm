@@ -8,6 +8,7 @@ from ether.abis import erc20
 
 from slack import send_notify
 from v3_lp import V3LP
+from config import conf
 
 
 def add_liquidity(lp_cli: V3LP, tick_range=500, utilization=0.3):
@@ -81,7 +82,6 @@ def poll_pair(lp_cli: V3LP,conf):
 
 
 def main():
-    conf = json.load(open(sys.argv[1] + ".json"))
     cli = Web3Client["arb"].with_account(conf["private_key"])
     lp_cli = V3LP(
         cli,
