@@ -33,14 +33,14 @@ def add_liquidity(lp_cli: V3LP, tick_range=500, utilization=0.3):
             "tick_lower": current_tick - tick_range,
             "tick_upper": current_tick - 10,
             "amount0": token0_to_add,
-            "amount1": token1_to_add,
+            "amount1": 0,
         }
     )
     data.append(
         {
             "tick_lower": current_tick + 10,
             "tick_upper": current_tick + tick_range,
-            "amount0": token0_to_add,
+            "amount0": 0,
             "amount1": token1_to_add,
         }
     )
