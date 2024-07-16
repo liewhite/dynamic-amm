@@ -97,7 +97,11 @@ class V3LP:
                 )
             )
 
-        result = self.nft_manager.functions["multicall"](data).transact().hex()
+        result = (
+            self.nft_manager.functions["multicall"](data)
+            .transact({"gas_limit": 3000000})
+            .hex()
+        )
         send_notify(
             f"""INFO: 添加流动性 ✅
 tx: {result}
@@ -119,7 +123,11 @@ tx: {result}
             data.append(dec)
             data.append(col)
             data.append(bn)
-        result = self.nft_manager.functions["multicall"](data).transact().hex()
+        result = (
+            self.nft_manager.functions["multicall"](data)
+            .transact({"gas_limit": 3000000})
+            .hex()
+        )
         send_notify(
             f"""INFO: 移除流动性 ✅
 tx: {result}
