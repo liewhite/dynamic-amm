@@ -2,6 +2,7 @@ import json
 import logging
 import time
 from ether.client import Web3Client
+from web3.types import TxParams
 
 from slack import send_notify
 
@@ -99,7 +100,7 @@ class V3LP:
 
         result = (
             self.nft_manager.functions["multicall"](data)
-            .transact({"gas_limit": 3000000})
+            .transact({"gas": 3000000})
             .hex()
         )
         send_notify(
@@ -125,7 +126,7 @@ tx: {result}
             data.append(bn)
         result = (
             self.nft_manager.functions["multicall"](data)
-            .transact({"gas_limit": 3000000})
+            .transact({"gas": 3000000})
             .hex()
         )
         send_notify(
