@@ -69,7 +69,7 @@ def poll_pair(lp_cli: V3LP, conf):
         token_ids = lp_cli.get_token_ids()
         # 已经存在流动性， 检查是否超时(缩小区间)
         logging.info(f"流动性持续时间 {now - lp_cli.last_add_ts} secs")
-        if now - lp_cli.last_add_ts > 3600 * 6:
+        if now - lp_cli.last_add_ts > conf['narrow_interval']:
             token0_low, token0_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[0])
             )
