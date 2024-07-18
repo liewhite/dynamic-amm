@@ -21,6 +21,7 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     """
     把token0 token1 分别添加单边流动性
     """
+    logging.info(f'add liquidity: {tick_range_token0} {tick_range_token1}')
     tick_range_token0 = int(tick_range_token0)
     tick_range_token1 = int(tick_range_token1)
     token0 = lp_cli.cli.eth.contract(lp_cli.token0, abi=erc20)
@@ -34,9 +35,6 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     )
 
     current_tick = lp_cli.current_tick()
-    logging.info(
-        f"当前tick: {current_tick}"
-    )
     data = []
     data.append(
         {
@@ -54,7 +52,7 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
             "amount1": token1_to_add,
         }
     )
-    return lp_cli.add_liquidity(data)
+    return lp_cli.add_liquidity(current_tick, data)
 
 
 def poll_pair(lp_cli: V3LP, conf):

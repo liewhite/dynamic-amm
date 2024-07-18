@@ -66,7 +66,7 @@ class V3LP:
     def position_ticks(self, liq):
         return liq[4], liq[5]
 
-    def add_liquidity(self, liqs):
+    def add_liquidity(self, current_tick, liqs):
         logging.info(f"尝试添加流动性 {liqs}")
         if (
             liqs[0]["amount0"] < self.token_0_min_amount
@@ -106,6 +106,7 @@ class V3LP:
         send_notify(
             f"""INFO: 添加流动性 ✅
 tx: {result}
+current tick: {current_tick}
 {json.dumps(liqs, indent=2)}
 """
         )
