@@ -34,6 +34,9 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     )
 
     current_tick = lp_cli.current_tick()
+    logging.info(
+        f"当前tick: {current_tick}"
+    )
     data = []
     data.append(
         {
@@ -60,18 +63,23 @@ def poll_pair(lp_cli: V3LP, conf):
     """
     now = time.time()
     nft_balance = lp_cli.balanceOf()
-    inc_step = conf['inc_step']
-    dec_step = conf['dec_step']
+    inc_step = conf["inc_step"]
+    dec_step = conf["dec_step"]
     # 没有流动性， 添加一波
     if nft_balance == 0:
         lp_cli.cli.eth.wait_for_transaction_receipt(
-            add_liquidity(lp_cli, conf["token0_tick_range"], conf['token1_tick_range'], conf["position"])
+            add_liquidity(
+                lp_cli,
+                conf["token0_tick_range"],
+                conf["token1_tick_range"],
+                conf["position"],
+            )
         )
     elif nft_balance == 2:
         token_ids = lp_cli.get_token_ids()
         # 已经存在流动性， 检查是否超时(缩小区间)
         logging.info(f"流动性持续时间 {now - lp_cli.last_add_ts} secs")
-        if now - lp_cli.last_add_ts > conf['narrow_interval']:
+        if now - lp_cli.last_add_ts > conf["narrow_interval"]:
             token0_low, token0_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[0])
             )
@@ -103,6 +111,9 @@ def poll_pair(lp_cli: V3LP, conf):
             old_range_token1 = token1_up - token1_low
             current_tick = lp_cli.current_tick()
             if current_tick > token1_up or current_tick < token0_low:
+                logging.info(
+                    f"扩大区间, old0: {old_range_token0}, old1: {old_range_token1}"
+                )
                 lp_cli.cli.eth.wait_for_transaction_receipt(
                     lp_cli.remove_liquidity(token_ids)
                 )
