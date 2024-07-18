@@ -60,6 +60,8 @@ def poll_pair(lp_cli: V3LP, conf):
     """
     now = time.time()
     nft_balance = lp_cli.balanceOf()
+    inc_step = conf['inc_step']
+    dec_step = conf['dec_step']
     # 没有流动性， 添加一波
     if nft_balance == 0:
         lp_cli.cli.eth.wait_for_transaction_receipt(
@@ -84,8 +86,8 @@ def poll_pair(lp_cli: V3LP, conf):
             lp_cli.cli.eth.wait_for_transaction_receipt(
                 add_liquidity(
                     lp_cli,
-                    old_range_token0 / 2,
-                    old_range_token1 / 2,
+                    old_range_token0 - dec_step,
+                    old_range_token1 - dec_step,
                     pos=conf["position"],
                 )
             )
@@ -107,8 +109,8 @@ def poll_pair(lp_cli: V3LP, conf):
                 lp_cli.cli.eth.wait_for_transaction_receipt(
                     add_liquidity(
                         lp_cli,
-                        old_range_token0 * 1.5,
-                        old_range_token1 * 1.5,
+                        old_range_token0 + inc_step,
+                        old_range_token1 + inc_step,
                         pos=conf["position"],
                     )
                 )
