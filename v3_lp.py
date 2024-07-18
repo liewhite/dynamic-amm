@@ -83,10 +83,8 @@ class V3LP:
                         {
                             "token0": self.token0,
                             "token1": self.token1,
-                            "tickLower": align_tick(
-                                i["tick_lower"], self.tick_spacing
-                            ),  # 设定你的tick范围
-                            "tickUpper": align_tick(i["tick_upper"], self.tick_spacing),
+                            "tickLower": i["tick_lower"],
+                            "tickUpper": i["tick_upper"],
                             "amount0Desired": i["amount0"],
                             "amount1Desired": i["amount1"],
                             "amount0Min": 0,
