@@ -11,9 +11,8 @@ from v3_lp import V3LP
 from config import conf
 
 """
-token0/token1 形式， 比如arb/usdc
-tick = token0 为base token1为quote的价格
 tick越大, token0越贵
+所以tick + range 表示token0的范围
 """
 
 
@@ -38,18 +37,18 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     data = []
     data.append(
         {
-            "tick_lower": current_tick - tick_range_token0,
+            "tick_lower": current_tick - tick_range_token1,
             "tick_upper": current_tick,
-            "amount0": token0_to_add,
+            "amount0": token0_to_add, # 不需要token0,为了tick 滑点保留
             "amount1": token1_to_add,
         }
     )
     data.append(
         {
             "tick_lower": current_tick,
-            "tick_upper": current_tick + tick_range_token1,
+            "tick_upper": current_tick + tick_range_token0,
             "amount0": token0_to_add,
-            "amount1": token1_to_add,
+            "amount1": token1_to_add, # 不需要token1
         }
     )
     return lp_cli.add_liquidity(current_tick, data)
