@@ -16,13 +16,11 @@ tick越大, token0越贵
 """
 
 
-def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, pos=0.3):
+def add_liquidity(lp_cli: V3LP, tick_range_low=500, tick_range_up=500, pos=0.3):
     """
     把token0 token1 分别添加单边流动性
     """
-    logging.info(f'add liquidity: {tick_range_token0} {tick_range_token1}')
-    tick_range_token0 = int(tick_range_token0)
-    tick_range_token1 = int(tick_range_token1)
+    logging.info(f'add liquidity: {tick_range_low} {tick_range_up}')
     token0 = lp_cli.cli.eth.contract(lp_cli.token0, abi=erc20)
     token1 = lp_cli.cli.eth.contract(lp_cli.token1, abi=erc20)
     # 默认添加30%
@@ -37,7 +35,7 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     data = []
     data.append(
         {
-            "tick_lower": current_tick - tick_range_token1,
+            "tick_lower": current_tick - tick_range_low,
             "tick_upper": current_tick,
             "amount0": token0_to_add, # 不需要token0,为了tick 滑点保留
             "amount1": token1_to_add,
@@ -46,7 +44,7 @@ def add_liquidity(lp_cli: V3LP, tick_range_token0=500, tick_range_token1=500, po
     data.append(
         {
             "tick_lower": current_tick,
-            "tick_upper": current_tick + tick_range_token0,
+            "tick_upper": current_tick + tick_range_up,
             "amount0": token0_to_add,
             "amount1": token1_to_add, # 不需要token1
         }
@@ -67,8 +65,8 @@ def poll_pair(lp_cli: V3LP, conf):
         lp_cli.cli.eth.wait_for_transaction_receipt(
             add_liquidity(
                 lp_cli,
-                conf["token0_tick_range"],
-                conf["token1_tick_range"],
+                conf["low_tick_range"],
+                conf["up_tick_range"],
                 conf["position"],
             )
         )
@@ -77,39 +75,39 @@ def poll_pair(lp_cli: V3LP, conf):
         # 已经存在流动性， 检查是否超时(缩小区间)
         logging.info(f"流动性持续时间 {now - lp_cli.last_add_ts} secs")
         if now - lp_cli.last_add_ts > conf["narrow_interval"]:
-            token0_low, token0_up = lp_cli.position_ticks(
+            low_low, low_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[0])
             )
-            token1_low, token1_up = lp_cli.position_ticks(
+            up_low, up_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[1])
             )
-            old_range_token0 = token0_up - token0_low
-            old_range_token1 = token1_up - token1_low
+            old_range_low = low_up - low_low
+            old_range_up = up_up - up_low
             lp_cli.cli.eth.wait_for_transaction_receipt(
                 lp_cli.remove_liquidity(token_ids)
             )
             lp_cli.cli.eth.wait_for_transaction_receipt(
                 add_liquidity(
                     lp_cli,
-                    old_range_token0 - dec_step,
-                    old_range_token1 - dec_step,
+                    old_range_low - dec_step,
+                    old_range_up - dec_step,
                     pos=conf["position"],
                 )
             )
         else:
             # 已经存在流动性， 检查tick是否走出区间了
-            token0_low, token0_up = lp_cli.position_ticks(
+            low_low, low_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[0])
             )
-            token1_low, token1_up = lp_cli.position_ticks(
+            up_low, up_up = lp_cli.position_ticks(
                 lp_cli.position_info(token_ids[1])
             )
-            old_range_token0 = token0_up - token0_low
-            old_range_token1 = token1_up - token1_low
+            old_range_low = low_up - low_low
+            old_range_up = up_up - up_low
             current_tick = lp_cli.current_tick()
-            if current_tick > token1_up or current_tick < token0_low:
+            if current_tick > up_up or current_tick < low_low:
                 logging.info(
-                    f"扩大区间, old0: {old_range_token0}, old1: {old_range_token1}"
+                    f"扩大区间, old low: {old_range_low}, old up: {old_range_up}"
                 )
                 lp_cli.cli.eth.wait_for_transaction_receipt(
                     lp_cli.remove_liquidity(token_ids)
@@ -117,8 +115,8 @@ def poll_pair(lp_cli: V3LP, conf):
                 lp_cli.cli.eth.wait_for_transaction_receipt(
                     add_liquidity(
                         lp_cli,
-                        old_range_token0 + inc_step,
-                        old_range_token1 + inc_step,
+                        old_range_low + inc_step,
+                        old_range_up + inc_step,
                         pos=conf["position"],
                     )
                 )
